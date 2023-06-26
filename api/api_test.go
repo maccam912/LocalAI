@@ -15,6 +15,7 @@ import (
 	. "github.com/go-skynet/LocalAI/api"
 	"github.com/go-skynet/LocalAI/pkg/gallery"
 	"github.com/go-skynet/LocalAI/pkg/model"
+	"github.com/go-skynet/LocalAI/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -56,30 +57,10 @@ func getModelStatus(url string) (response map[string]interface{}) {
 }
 
 func getModels(url string) (response []gallery.GalleryModel) {
-
-	//url := "http://localhost:AI/models/apply"
-
-	// Create the request payload
-
-	// Create the HTTP request
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return
-	}
-
-	// Unmarshal the response into a map[string]interface{}
-	err = json.Unmarshal(body, &response)
-	if err != nil {
-		fmt.Println("Error unmarshaling JSON response:", err)
-		return
-	}
+	utils.GetURI(url, func(url string, i []byte) error {
+		// Unmarshal YAML data into a struct
+		return json.Unmarshal(i, &response)
+	})
 	return
 }
 
@@ -202,7 +183,7 @@ var _ = Describe("API test", func() {
 		Context("Applying models", func() {
 			It("applies models from a gallery", func() {
 
-				models := getModels("http://127.0.0.1:9090/models/list")
+				models := getModels("http://127.0.0.1:9090/models/available")
 				Expect(len(models)).To(Equal(2), fmt.Sprint(models))
 				Expect(models[0].Installed).To(BeFalse(), fmt.Sprint(models))
 				Expect(models[1].Installed).To(BeFalse(), fmt.Sprint(models))
@@ -235,7 +216,7 @@ var _ = Describe("API test", func() {
 				Expect(content["backend"]).To(Equal("bert-embeddings"))
 				Expect(content["foo"]).To(Equal("bar"))
 
-				models = getModels("http://127.0.0.1:9090/models/list")
+				models = getModels("http://127.0.0.1:9090/models/available")
 				Expect(len(models)).To(Equal(2), fmt.Sprint(models))
 				Expect(models[0].Name).To(Or(Equal("bert"), Equal("bert2")))
 				Expect(models[1].Name).To(Or(Equal("bert"), Equal("bert2")))

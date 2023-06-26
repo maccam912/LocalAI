@@ -9,7 +9,7 @@ GPT4ALL_VERSION?=3417a37c5472fb5111a7bd0ed747c8df749c595e
 GOGGMLTRANSFORMERS_VERSION?=a459d2726792132541152c981ed9fbfe28f4fd20
 RWKV_REPO?=https://github.com/donomii/go-rwkv.cpp
 RWKV_VERSION?=f5a8c45396741470583f59b916a2a7641e63bcd0
-WHISPER_CPP_VERSION?=57543c169e27312e7546d07ed0d8c6eb806ebc36
+WHISPER_CPP_VERSION?=3f7a03ebe3b65be0792849e300a122f6a050e3f8
 BERT_VERSION?=6069103f54b9969c02e789d0fb12a23bd614285f
 PIPER_VERSION?=56b8a81b4760a6fbee1a82e62f007ae7e8f010a7
 BLOOMZ_VERSION?=1834e77b83faafe912ad4092ccf7f77937349e2f
@@ -19,7 +19,13 @@ CUDA_LIBPATH?=/usr/local/cuda/lib64/
 STABLEDIFFUSION_VERSION?=d89260f598afb809279bc72aa0107b4292587632
 GO_TAGS?=
 BUILD_ID?=git
+
+VERSION?=$(shell git describe --always --tags --dirty || echo "dev" )
+# go tool nm ./local-ai | grep Commit
 LD_FLAGS?=
+override LD_FLAGS += -X "github.com/go-skynet/LocalAI/internal.Version=$(VERSION)"
+override LD_FLAGS += -X "github.com/go-skynet/LocalAI/internal.Commit=$(shell git rev-parse HEAD)"
+
 OPTIONAL_TARGETS?=
 ESPEAK_DATA?=
 
@@ -244,6 +250,8 @@ build: prepare ## Build the project
 	$(info ${GREEN}I local-ai build info:${RESET})
 	$(info ${GREEN}I BUILD_TYPE: ${YELLOW}$(BUILD_TYPE)${RESET})
 	$(info ${GREEN}I GO_TAGS: ${YELLOW}$(GO_TAGS)${RESET})
+	$(info ${GREEN}I LD_FLAGS: ${YELLOW}$(LD_FLAGS)${RESET})
+
 	CGO_LDFLAGS="$(CGO_LDFLAGS)" C_INCLUDE_PATH=${C_INCLUDE_PATH} LIBRARY_PATH=${LIBRARY_PATH} $(GOCMD) build -ldflags "$(LD_FLAGS)" -tags "$(GO_TAGS)" -o $(BINARY_NAME) ./
 ifeq ($(BUILD_TYPE),metal)
 	cp go-llama/build/bin/ggml-metal.metal .
